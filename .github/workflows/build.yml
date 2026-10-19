@@ -32,18 +32,17 @@ jobs:
           sudo apt-get update -qq
           sudo apt-get install -y -qq ffmpeg
 
-      - name: Recuperer l'application web
+      - uses: actions/checkout@v4
+
+      - name: Recuperer l'application web (depuis le zip du depot)
         run: |
           set -euo pipefail
+          test -f coran-v6-NOUVEAU.zip || { echo "ERREUR : le fichier coran-v6-NOUVEAU.zip n'est pas dans le depot GitHub."; exit 1; }
           mkdir -p proj/www
+          unzip -q -o coran-v6-NOUVEAU.zip -d proj/www
           cd proj/www
-          for f in index.html sourates.js config.js manifest.json icon-192.png icon-512.png; do
-            curl -fsSL --retry 5 --retry-delay 3 -o "$f" "$SITE/$f"
-          done
-          if ! grep -q "EMBARQUE" config.js; then
-            echo "ERREUR : la version v6 de l'application n'est pas encore en ligne sur Cloudflare."
-            exit 1
-          fi
+          rm -f sw.js GUIDE-MISE-EN-LIGNE.txt
+          grep -q "EMBARQUE" config.js
           sed -i "s#^const AUDIO_BASE = .*#const AUDIO_BASE = 'audio/';#" config.js
           sed -i "s#^const EMBARQUE = .*#const EMBARQUE = true;#" config.js
           grep -n "^const " config.js
